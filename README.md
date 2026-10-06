@@ -6,12 +6,12 @@ x402 支付测试接口（只有测试网）：用你的 x402 客户端或钱包
 
 ## 地址
 
-把 `<deployment>` 换成部署后的域名：
+线上地址：https://x402-ping.vercel.app（Vercel 项目 `x402-ping`）。已在 AgentVerse 格子 (83,40) 挂牌：https://www.agent-verse.live/?x=83&y=40
 
 | URL | 说明 |
 | --- | --- |
-| `https://<deployment>/` | 一页静态说明 |
-| `https://<deployment>/testnet` | Monad 测试网 `eip155:10143`，Base Sepolia `eip155:84532`（按此顺序），每次 0.01 USDC，测试网 USDC 没有真实价值 |
+| `https://x402-ping.vercel.app/` | 一页静态说明 |
+| `https://x402-ping.vercel.app/testnet` | Monad 测试网 `eip155:10143`，Base Sepolia `eip155:84532`（按此顺序），每次 0.01 USDC，测试网 USDC 没有真实价值 |
 
 两个网络同一个收款地址 `0x4eCf92bAb524039Fc4027994b9D88C2DB2Ee05E6`（环境变量 `PAY_TO_ADDRESS` 可覆盖），价格都是 10000 原子单位（0.01 USDC）。Monad 测试网 USDC 可在 https://faucet.circle.com 领取。
 
