@@ -9,7 +9,6 @@ import type { FacilitatorFactory } from '../lib/gate'
 
 // Facilitator URLs the task prescribes (also asserted in ping.test.ts so a change in lib/chains.ts is noticed).
 export const MOLANDAK = 'https://x402-facilitator.molandak.org'
-export const PAYAI = 'https://facilitator.payai.network'
 export const X402_ORG = 'https://x402.org/facilitator'
 
 const authorizationTypes = {
@@ -93,18 +92,17 @@ export function takeDown(f: MockFacilitator): () => void {
   return () => f.getSupported.mockImplementation(working)
 }
 
-/** The three facilitators of the task, as doubles. Molandak serves both Monad networks, like the real one. */
+/** The two facilitators of the task, as doubles. */
 export function createFacilitators() {
-  const molandak = createMockFacilitator(['eip155:143', 'eip155:10143'])
-  const payai = createMockFacilitator(['eip155:8453'])
+  const molandak = createMockFacilitator(['eip155:10143'])
   const x402org = createMockFacilitator(['eip155:84532'])
-  const byUrl: Record<string, FacilitatorClient> = { [MOLANDAK]: molandak, [PAYAI]: payai, [X402_ORG]: x402org }
+  const byUrl: Record<string, FacilitatorClient> = { [MOLANDAK]: molandak, [X402_ORG]: x402org }
   const makeFacilitator: FacilitatorFactory = (url) => {
     const f = byUrl[url]
     if (!f) throw new Error(`test: no mock facilitator for ${url}`)
     return f
   }
-  return { molandak, payai, x402org, makeFacilitator }
+  return { molandak, x402org, makeFacilitator }
 }
 
 export function decodeHeader(value: string | null): any {

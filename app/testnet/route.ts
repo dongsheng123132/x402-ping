@@ -1,4 +1,4 @@
-import { gates } from '../../lib/instance'
+import { gate } from '../../lib/instance'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -6,5 +6,5 @@ export const runtime = 'nodejs'
 export const maxDuration = 30
 
 export function GET(req: Request) {
-  return gates.testnet.handle(req)
+  return gate.handle(req)
 }

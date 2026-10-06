@@ -11,12 +11,11 @@ import type {
 } from '@x402/core/server'
 import type { PaymentPayload, SupportedResponse } from '@x402/core/types'
 import { ExactEvmScheme } from '@x402/evm/exact/server'
-import { ALL_CHAINS, PRICE_USD, ROUTES, payToAddress } from './chains'
-import type { Chain, RoutePath } from './chains'
+import { CHAINS, PRICE_USD, payToAddress } from './chains'
+import type { Chain } from './chains'
 
 /**
- * One Gate per paid URL (/mainnet, /testnet). Each Gate owns its own x402ResourceServer with exactly the
- * two chains of that URL registered, so mainnet and testnet cannot end up in one 402 by construction.
+ * The Gate of the one paid URL (/testnet): an x402ResourceServer with exactly Monad testnet and Base Sepolia registered.
  *
  * Modelled on agent-verse.live-new/final/lib/x402-flow.ts (the production-proven seller): one
  * ExactEvmScheme per chain with registerMoneyParser, one facilitator client per chain, and
@@ -135,15 +134,11 @@ export class Gate {
   private readonly now: () => number
   private readonly log: (message: string) => void
 
-  constructor(readonly path: RoutePath, opts: GateOptions = {}) {
+  constructor(opts: GateOptions = {}) {
     this.makeFacilitator = opts.makeFacilitator ?? httpFacilitator
     this.retryAfterMs = opts.retryAfterMs ?? RETRY_AFTER_MS
     this.now = opts.now ?? Date.now
     this.log = opts.log ?? ((m) => console.warn(m))
-  }
-
-  private get chains(): readonly Chain[] {
-    return ROUTES[this.path]
   }
 
   /** The cached server, (re)probed when nothing is cached yet or a chain is missing and the backoff has passed. */
@@ -160,9 +155,9 @@ export class Gate {
   private async probe(): Promise<void> {
     let next: Built | null = null
     try {
-      next = await build(this.chains, this.makeFacilitator)
+      next = await build(CHAINS, this.makeFacilitator)
     } catch (e) {
-      this.log(`[x402-ping] ${this.path}: no facilitator answered: ${(e as Error)?.message}`)
+      this.log(`[x402-ping] /testnet: no facilitator answered: ${(e as Error)?.message}`)
     }
     this.nextProbeAt = this.now() + this.retryAfterMs
     // A fresh probe never takes chains away from what is already being offered.
@@ -170,7 +165,7 @@ export class Gate {
       this.current = next
       if (next.missing.length > 0) {
         this.log(
-          `[x402-ping] ${this.path}: offering only ${next.ready.map((c) => c.network).join(', ')}; ` +
+          `[x402-ping] /testnet: offering only ${next.ready.map((c) => c.network).join(', ')}; ` +
             `${next.missing.map((c) => c.network).join(', ')} left out (its facilitator is down or does not list it)`,
         )
       }
@@ -221,7 +216,7 @@ export class Gate {
       result = await http.processHTTPRequest(context)
     } catch (e) {
       // verify happens before settle, so nothing was charged.
-      this.log(`[x402-ping] ${this.path}: facilitator error before settlement: ${(e as Error)?.message}`)
+      this.log(`[x402-ping] /testnet: facilitator error before settlement: ${(e as Error)?.message}`)
       return json(503, { error: 'facilitator_unavailable', charged: 'no' })
     }
     if (result.type === 'no-payment-required') {
@@ -240,7 +235,7 @@ export class Gate {
       })
     } catch (e) {
       // The facilitator did not answer the settle call: the transfer may or may not have happened.
-      this.log(`[x402-ping] ${this.path}: facilitator error during settlement: ${(e as Error)?.message}`)
+      this.log(`[x402-ping] /testnet: facilitator error during settlement: ${(e as Error)?.message}`)
       return json(502, { error: 'settlement_unconfirmed', charged: 'unknown' })
     }
     if (!settled.success) {
@@ -248,14 +243,13 @@ export class Gate {
       return json(r.status, r.body ?? {}, r.headers)
     }
 
-    const chain = ALL_CHAINS.find((c) => c.network === result.paymentRequirements.network)
     return json(
       200,
       {
         ok: true,
         service: 'x402-ping',
         network: result.paymentRequirements.network,
-        testnet: chain?.testnet ?? false,
+        testnet: true,
         amount: PRICE_USD,
         asset: 'USDC',
         pay_to: result.paymentRequirements.payTo,
@@ -268,6 +262,6 @@ export class Gate {
   }
 }
 
-export function createGates(opts: GateOptions = {}): Record<'mainnet' | 'testnet', Gate> {
-  return { mainnet: new Gate('/mainnet', opts), testnet: new Gate('/testnet', opts) }
+export function createGate(opts: GateOptions = {}): Gate {
+  return new Gate(opts)
 }

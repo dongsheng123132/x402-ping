@@ -1,33 +1,31 @@
 # x402-ping
 
-x402 支付测试接口：用你的 x402 客户端或钱包付 0.01 USDC，拿回一张 JSON 回执。用来确认客户端能在一个真实的卖家上完成支付。无数据库、无 API key、无私钥。
+x402 支付测试接口（只有测试网）：用你的 x402 客户端或钱包付 0.01 测试网 USDC，拿回一张 JSON 回执。用来确认客户端能在一个真实的卖家上完成支付。无数据库、无 API key、无私钥。
+
+主网测试不在这里：直接在 AgentVerse 买一个格子（每格 0.10 USDC，Monad 或 Base）：https://www.agent-verse.live/about
 
 ## 地址
 
 把 `<deployment>` 换成部署后的域名：
 
-| URL | 提供的网络（按此顺序） | 钱 |
-| --- | --- | --- |
-| `https://<deployment>/` | 一页静态说明 | |
-| `https://<deployment>/mainnet` | Monad 主网 `eip155:143`，Base 主网 `eip155:8453` | 真钱，每次 0.01 USDC |
-| `https://<deployment>/testnet` | Monad 测试网 `eip155:10143`，Base Sepolia `eip155:84532` | 测试网 USDC，无真实价值 |
+| URL | 说明 |
+| --- | --- |
+| `https://<deployment>/` | 一页静态说明 |
+| `https://<deployment>/testnet` | Monad 测试网 `eip155:10143`，Base Sepolia `eip155:84532`（按此顺序），每次 0.01 USDC，测试网 USDC 没有真实价值 |
 
-主网和测试网永远不会出现在同一个 402 里。所有网络同一个收款地址 `0x4eCf92bAb524039Fc4027994b9D88C2DB2Ee05E6`（环境变量 `PAY_TO_ADDRESS` 可覆盖），价格都是 10000 原子单位（0.01 USDC）。
+两个网络同一个收款地址 `0x4eCf92bAb524039Fc4027994b9D88C2DB2Ee05E6`（环境变量 `PAY_TO_ADDRESS` 可覆盖），价格都是 10000 原子单位（0.01 USDC）。Monad 测试网 USDC 可在 https://faucet.circle.com 领取。
 
 - 不带支付：HTTP 402，x402 v2，`PAYMENT-REQUIRED` 头。
-- 付款成功：HTTP 200，`{"ok":true,"service":"x402-ping","network":...,"testnet":...,"amount":"0.01","asset":"USDC","pay_to":...,"payer":...,"tx":...,"at":...}`，并带标准 `PAYMENT-RESPONSE` 头。
-- 某个 facilitator 不可用：402 里只保留另一个网络（日志里有记录）；该路径的 facilitator 全不可用：503 `{"error":"facilitator_unavailable","charged":"no"}`。
+- 付款成功：HTTP 200，`{"ok":true,"service":"x402-ping","network":...,"testnet":true,"amount":"0.01","asset":"USDC","pay_to":...,"payer":...,"tx":...,"at":...}`，并带标准 `PAYMENT-RESPONSE` 头。
+- 某个 facilitator 不可用：402 里只保留另一个网络（日志里有记录）；两个都不可用：503 `{"error":"facilitator_unavailable","charged":"no"}`。
 - 所有响应都是 `Cache-Control: no-store`。
 
 ## Facilitator
 
 | 网络 | Facilitator |
 | --- | --- |
-| Monad 主网 / Monad 测试网 | `https://x402-facilitator.molandak.org` |
-| Base 主网 | `https://facilitator.payai.network`（PayAI，免 key） |
+| Monad 测试网 | `https://x402-facilitator.molandak.org` |
 | Base Sepolia | `https://x402.org/facilitator` |
-
-**PayAI on Base mainnet is unverified until the first real payment.** 本地只读调用过它的 `/supported`，列出了 `eip155:8453`，但还没有用它真实结算过一笔 Base 主网付款。
 
 ## 测试里发现的客户端坑
 
